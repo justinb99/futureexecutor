@@ -1,7 +1,7 @@
 package justinb99.futureexecutor
 
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{Executor, Executors, ThreadPoolExecutor}
+import java.util.concurrent.{ExecutorService, Executors}
 
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,8 +14,8 @@ case class FutureExecutorStats(numberOfQueuedFutures: Int,
 
 trait FutureExecutor {
 
-  private [futureexecutor] val executor: Executor
-  lazy protected implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(executor)
+  private [futureexecutor] val executorService: ExecutorService
+  lazy protected implicit val executionContext = ExecutionContext.fromExecutorService(executorService)
 
   private[futureexecutor] val numberOfQueuedFutures = new AtomicInteger()
   private[futureexecutor] val numberOfExecutingFutures = new AtomicInteger()
@@ -49,6 +49,10 @@ trait FutureExecutor {
     result
   }
 
+  def shutdown(): Unit = {
+    executorService.shutdown()
+  }
+
 }
 
 object FutureExecutor {
@@ -62,7 +66,8 @@ trait ForkJoinThreadPool {
   self: FutureExecutor =>
 
   val numberOfThreads: Int
-  private [futureexecutor] lazy val executor = new ForkJoinPool(numberOfThreads)
+  private [futureexecutor] lazy val executorService = new ForkJoinPool(numberOfThreads)
+
 }
 
 object ForkJoinFutureExecutor {
@@ -79,7 +84,7 @@ trait FixedThreadPool {
   self: FutureExecutor =>
 
   val numberOfThreads: Int
-  private [futureexecutor] lazy val executor = Executors.newFixedThreadPool(numberOfThreads)
+  private [futureexecutor] lazy val executorService = Executors.newFixedThreadPool(numberOfThreads)
 
 }
 

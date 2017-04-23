@@ -1,12 +1,16 @@
 package justinb99.futureexecutor
 
-import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.{ExecutorService, ThreadPoolExecutor}
 
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ForkJoinPool
+import scala.concurrent.{Await, Future}
+
+import org.mockito.Mockito
+import Mockito._
 
 /**
   * Created by justin on 4/20/17.
@@ -19,7 +23,7 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
     val forkJoinThreadPool = futureExecutor.asInstanceOf[ForkJoinThreadPool]
     forkJoinThreadPool.numberOfThreads shouldBe 1
-    forkJoinThreadPool.executor shouldBe a [ForkJoinPool]
+    forkJoinThreadPool.executorService shouldBe a [ForkJoinPool]
   }
 
   it should "construct with a Fork-Join thread pool by default" in {
@@ -33,7 +37,7 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
     val fixedThreadPool = futureExecutor.asInstanceOf[FixedThreadPool]
     fixedThreadPool.numberOfThreads shouldBe 1
-    fixedThreadPool.executor shouldBe a [ThreadPoolExecutor]
+    fixedThreadPool.executorService shouldBe a [ThreadPoolExecutor]
   }
 
   it should "create and run a future" in {
@@ -142,5 +146,16 @@ class FutureExecutorTest extends FlatSpec with Matchers {
     val stats = futureExecutor.stats
     stats.numberOfExecutingFutures shouldBe 1
     stats.numberOfQueuedFutures shouldBe 2
+  }
+
+  it should "shutdown the ExecutorService" in {
+    val mockExecutorService = MockitoSugar.mock[ExecutorService]
+    val futureExecutor = new FutureExecutor {
+      override private[futureexecutor] val executorService = mockExecutorService
+    }
+
+    futureExecutor.shutdown()
+
+    verify(mockExecutorService).shutdown()
   }
 }
