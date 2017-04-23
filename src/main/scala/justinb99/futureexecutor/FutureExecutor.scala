@@ -1,6 +1,6 @@
 package justinb99.futureexecutor
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.util.concurrent.{ExecutorService, Executors}
 
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -9,9 +9,6 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Created by justin on 4/20/17.
   */
-case class FutureExecutorStats(numberOfQueuedFutures: Int,
-                               numberOfExecutingFutures: Int)
-
 trait FutureExecutor {
 
   private [futureexecutor] val executorService: ExecutorService
@@ -19,11 +16,15 @@ trait FutureExecutor {
 
   private[futureexecutor] val numberOfQueuedFutures = new AtomicInteger()
   private[futureexecutor] val numberOfExecutingFutures = new AtomicInteger()
+  private[futureexecutor] val executionTimeMillis = new AtomicLong()
+  private[futureexecutor] val numberOfCompletedFutures = new AtomicInteger()
 
   def stats: FutureExecutorStats = {
     FutureExecutorStats(
       numberOfQueuedFutures = numberOfQueuedFutures.get,
-      numberOfExecutingFutures = numberOfExecutingFutures.get
+      numberOfExecutingFutures = numberOfExecutingFutures.get,
+      executionTimeMillis = executionTimeMillis.get,
+      numberOfCompletedFutures = numberOfCompletedFutures.get
     )
   }
 
@@ -44,8 +45,15 @@ trait FutureExecutor {
   protected def executeFutureBody[T, U](arg: T, futureBody: T => U): U = {
     numberOfQueuedFutures.decrementAndGet()
     numberOfExecutingFutures.incrementAndGet()
+
+    val startMillis = System.currentTimeMillis()
     val result = futureBody(arg)
+    val endMillis = System.currentTimeMillis()
+    executionTimeMillis.addAndGet(endMillis - startMillis)
+
     numberOfExecutingFutures.decrementAndGet()
+    numberOfCompletedFutures.incrementAndGet()
+
     result
   }
 

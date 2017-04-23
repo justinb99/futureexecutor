@@ -19,25 +19,25 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
   "FutureExecutor" should "construct with a Fork-Join thread pool" in {
     val futureExecutor = ForkJoinFutureExecutor(1)
-    futureExecutor shouldBe a [ForkJoinThreadPool]
+    futureExecutor shouldBe a[ForkJoinThreadPool]
 
     val forkJoinThreadPool = futureExecutor.asInstanceOf[ForkJoinThreadPool]
     forkJoinThreadPool.numberOfThreads shouldBe 1
-    forkJoinThreadPool.executorService shouldBe a [ForkJoinPool]
+    forkJoinThreadPool.executorService shouldBe a[ForkJoinPool]
   }
 
   it should "construct with a Fork-Join thread pool by default" in {
     val futureExecutor = FutureExecutor(1)
-    futureExecutor shouldBe a [ForkJoinThreadPool]
+    futureExecutor shouldBe a[ForkJoinThreadPool]
   }
 
   it should "construct with a Fixed thread pool" in {
     val futureExecutor = FixedFutureExecutor(1)
-    futureExecutor shouldBe a [FixedThreadPool]
+    futureExecutor shouldBe a[FixedThreadPool]
 
     val fixedThreadPool = futureExecutor.asInstanceOf[FixedThreadPool]
     fixedThreadPool.numberOfThreads shouldBe 1
-    fixedThreadPool.executorService shouldBe a [ThreadPoolExecutor]
+    fixedThreadPool.executorService shouldBe a[ThreadPoolExecutor]
   }
 
   it should "create and run a future" in {
@@ -142,10 +142,14 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
     futureExecutor.numberOfExecutingFutures.set(1)
     futureExecutor.numberOfQueuedFutures.set(2)
+    futureExecutor.executionTimeMillis.set(3)
+    futureExecutor.numberOfCompletedFutures.set(4)
 
     val stats = futureExecutor.stats
     stats.numberOfExecutingFutures shouldBe 1
     stats.numberOfQueuedFutures shouldBe 2
+    stats.executionTimeMillis shouldBe 3l
+    stats.numberOfCompletedFutures shouldBe 4
   }
 
   it should "shutdown the ExecutorService" in {
@@ -158,4 +162,28 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
     verify(mockExecutorService).shutdown()
   }
+
+  it should "time Executions and track completed futures" in {
+    val futureExecutor = FutureExecutor(1)
+    val future1 = futureExecutor future {
+      Thread.sleep(300)
+      1
+    }
+
+    Await.result(future1, 1 second)
+
+    futureExecutor.executionTimeMillis.get shouldBe >=(300l)
+    futureExecutor.numberOfCompletedFutures.get shouldBe 1
+
+    val future2 = futureExecutor.map(future1) { val1 =>
+      Thread.sleep(500)
+      2
+    }
+
+    Await.result(future2, 1 second)
+
+    futureExecutor.executionTimeMillis.get shouldBe >=(800l)
+    futureExecutor.numberOfCompletedFutures.get shouldBe 2
+  }
+
 }
