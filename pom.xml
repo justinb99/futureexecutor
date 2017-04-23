@@ -62,7 +62,7 @@
                     <finalName>future-executor</finalName>
                     <archive>
                         <manifest>
-                            <mainClass>futureexecutor.Main</mainClass>
+                            <mainClass>justinb99.futureexecutor.SampleApp</mainClass>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
                             <useUniqueVersions>false</useUniqueVersions>
@@ -102,7 +102,7 @@
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
-                            <mainClass>futureexecutor.Main</mainClass>
+                            <mainClass>justinb99.futureexecutor.SampleApp</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

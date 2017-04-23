@@ -15,6 +15,18 @@ case class FutureExecutorStats(numberOfQueuedFutures: Int,
 
   val averageExecutionTimeMillis = executionTimeMillis / numberOfCompletedFutures.toLong
   val averageExecutionTime: String = FormattedDuration(averageExecutionTimeMillis)
+
+  override def toString: String = {
+    s"""|{
+        |  "numberOfQueuedFutures": $numberOfQueuedFutures,
+        |  "numberOfExecutingFutures": $numberOfExecutingFutures,
+        |  "executionTimeMillis": $executionTimeMillis,
+        |  "numberOfCompletedFutures": $numberOfCompletedFutures,
+        |  "executionTime": "$executionTime",
+        |  "averageExecutionTimeMillis": $averageExecutionTimeMillis,
+        |  "averageExecutionTime": "$averageExecutionTime"
+        |}""".stripMargin
+  }
 }
 
 object FormattedDuration {
