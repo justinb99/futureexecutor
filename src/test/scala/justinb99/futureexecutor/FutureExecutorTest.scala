@@ -1,16 +1,42 @@
 package justinb99.futureexecutor
 
+import java.util.concurrent.ThreadPoolExecutor
+
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.forkjoin.ForkJoinPool
 
 /**
   * Created by justin on 4/20/17.
   */
 class FutureExecutorTest extends FlatSpec with Matchers {
 
-  "FutureExecutor" should "create and run a future" in {
+  "FutureExecutor" should "construct with a Fork-Join thread pool" in {
+    val futureExecutor = ForkJoinFutureExecutor(1)
+    futureExecutor shouldBe a [ForkJoinThreadPool]
+
+    val forkJoinThreadPool = futureExecutor.asInstanceOf[ForkJoinThreadPool]
+    forkJoinThreadPool.numberOfThreads shouldBe 1
+    forkJoinThreadPool.executor shouldBe a [ForkJoinPool]
+  }
+
+  it should "construct with a Fork-Join thread pool by default" in {
+    val futureExecutor = FutureExecutor(1)
+    futureExecutor shouldBe a [ForkJoinThreadPool]
+  }
+
+  it should "construct with a Fixed thread pool" in {
+    val futureExecutor = FixedFutureExecutor(1)
+    futureExecutor shouldBe a [FixedThreadPool]
+
+    val fixedThreadPool = futureExecutor.asInstanceOf[FixedThreadPool]
+    fixedThreadPool.numberOfThreads shouldBe 1
+    fixedThreadPool.executor shouldBe a [ThreadPoolExecutor]
+  }
+
+  it should "create and run a future" in {
     val expectedValue = 55
     val futureExecutor = FutureExecutor(1)
 
