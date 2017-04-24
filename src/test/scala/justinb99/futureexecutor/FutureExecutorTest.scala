@@ -2,15 +2,14 @@ package justinb99.futureexecutor
 
 import java.util.concurrent.{ExecutorService, ThreadPoolExecutor}
 
+import org.mockito.Mockito
+import org.mockito.Mockito._
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.concurrent.{Await, Future}
-
-import org.mockito.Mockito
-import Mockito._
 
 /**
   * Created by justin on 4/20/17.
@@ -144,12 +143,14 @@ class FutureExecutorTest extends FlatSpec with Matchers {
     futureExecutor.numberOfQueuedFutures.set(2)
     futureExecutor.executionTimeMillis.set(3)
     futureExecutor.numberOfCompletedFutures.set(4)
+    futureExecutor.numberOfFailedFutures.set(5)
 
     val stats = futureExecutor.stats
     stats.numberOfExecutingFutures shouldBe 1
     stats.numberOfQueuedFutures shouldBe 2
     stats.executionTimeMillis shouldBe 3l
     stats.numberOfCompletedFutures shouldBe 4
+    stats.numberOfFailedFutures shouldBe 5
   }
 
   it should "shutdown the ExecutorService" in {
@@ -184,6 +185,25 @@ class FutureExecutorTest extends FlatSpec with Matchers {
 
     futureExecutor.executionTimeMillis.get shouldBe >=(800l)
     futureExecutor.numberOfCompletedFutures.get shouldBe 2
+  }
+
+  it should "track stats when an exception occurs" in {
+    class FutureExecutorTestException extends RuntimeException
+    val futureExecutor = FutureExecutor(1)
+
+    val futureException = futureExecutor future {
+      Thread.sleep(300)
+      throw new FutureExecutorTestException
+    }
+
+    Await.ready(futureException, 1 second)
+
+    futureException.value.get.failed.get shouldBe a [FutureExecutorTestException]
+
+    futureExecutor.executionTimeMillis.get shouldBe >=(300l)
+    futureExecutor.numberOfCompletedFutures.get shouldBe 0
+    futureExecutor.numberOfFailedFutures.get shouldBe 1
+    futureExecutor.numberOfExecutingFutures.get shouldBe 0
   }
 
 }

@@ -11,7 +11,8 @@ class FutureExecutorStatsTest extends FlatSpec with Matchers {
     numberOfQueuedFutures = 100,
     numberOfExecutingFutures = 4,
     executionTimeMillis = 326238l, //5 min, 26 sec, 238 ms
-    numberOfCompletedFutures = 10
+    numberOfCompletedFutures = 10,
+    numberOfFailedFutures = 11
   )
 
   val expectedExecutionTime = "5 minutes, 26 seconds and 238 milliseconds"
@@ -35,6 +36,7 @@ class FutureExecutorStatsTest extends FlatSpec with Matchers {
           |  "numberOfExecutingFutures": 4,
           |  "executionTimeMillis": 326238,
           |  "numberOfCompletedFutures": 10,
+          |  "numberOfFailedFutures": 11,
           |  "executionTime": "$expectedExecutionTime",
           |  "averageExecutionTimeMillis": 32623,
           |  "averageExecutionTime": "$expectedAvgTime"

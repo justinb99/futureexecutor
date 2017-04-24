@@ -18,13 +18,15 @@ trait FutureExecutor {
   private[futureexecutor] val numberOfExecutingFutures = new AtomicInteger()
   private[futureexecutor] val executionTimeMillis = new AtomicLong()
   private[futureexecutor] val numberOfCompletedFutures = new AtomicInteger()
+  private[futureexecutor] val numberOfFailedFutures = new AtomicInteger()
 
   def stats: FutureExecutorStats = {
     FutureExecutorStats(
       numberOfQueuedFutures = numberOfQueuedFutures.get,
       numberOfExecutingFutures = numberOfExecutingFutures.get,
       executionTimeMillis = executionTimeMillis.get,
-      numberOfCompletedFutures = numberOfCompletedFutures.get
+      numberOfCompletedFutures = numberOfCompletedFutures.get,
+      numberOfFailedFutures = numberOfFailedFutures.get
     )
   }
 
@@ -47,14 +49,20 @@ trait FutureExecutor {
     numberOfExecutingFutures.incrementAndGet()
 
     val startMillis = System.currentTimeMillis()
-    val result = futureBody(arg)
-    val endMillis = System.currentTimeMillis()
-    executionTimeMillis.addAndGet(endMillis - startMillis)
 
-    numberOfExecutingFutures.decrementAndGet()
-    numberOfCompletedFutures.incrementAndGet()
-
-    result
+    try {
+      val result = futureBody(arg)
+      numberOfCompletedFutures.incrementAndGet()
+      result
+    } catch {
+      case t: Throwable =>
+        numberOfFailedFutures.incrementAndGet()
+        throw t
+    } finally {
+      val endMillis = System.currentTimeMillis()
+      executionTimeMillis.addAndGet(endMillis - startMillis)
+      numberOfExecutingFutures.decrementAndGet()
+    }
   }
 
   def shutdown(): Unit = {
